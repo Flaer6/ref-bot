@@ -1,0 +1,19 @@
+{
+	"name": "ref-bot",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"dev": "nodemon index.js",
+		"start": "node index.js"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"telegraf": "^4.15.3",
+		"telegraf-i18n": "^6.6.0"
+	},
+	"devDependencies": {
+		"nodemon": "^3.0.3"
+	}
+}

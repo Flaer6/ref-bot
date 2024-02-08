@@ -1,0 +1,25 @@
+{
+	"hello": "<b>🚀 Xush kelibsiz ${username}!</b>",
+	"Main_buttons": {
+		"earn": "💳 Pul ishlash",
+		"profile": "💼 Mening kabinetim",
+		"withdraw": "📤 Pulni yechib olish"
+	},
+	"Earn": {
+		"content": "<b>🚀 Referal programma</b>\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n<b>💵 tolaymz:</b>\n1 Referal - 500 UZS\n\n<b>👤 Siz taklish qilganlar soni:</b>\n0 партнёров\n\n<b>🔗 Sizning partnerlik ssilkangiz:</b>\n<code>${refUrl}</code>",
+		"share": "♻️ Havolani ulashing",
+		"share_text": "👋 Referal botimizga xush kelibsiz! 🎉 Do'stlaringizni taklif qiling va bonuslarga ega bo'ling! 🎁\n ${refUrl}"
+	},
+	"Profile": {
+		"content": "<b>📱 Sizning ofisingiz: </b>\n➖➖➖➖➖➖➖➖➖\n<b>👤 Имя:</b> ${username}\n<b>🔑 sizning ID:</b> <code>${user_id}</code>\n<b>🕜 botdagi kunlar: </b> 1\n➖➖➖➖➖➖➖➖➖\n<b>💳 Osnovnoy :</b>\n● Osnovnoy : <b>0₽</b>\n● Ishlagan :<b>0₽</b>\n● To'lanishi kutilmoqda:  <b>0₽</b>\n➖➖➖➖➖➖➖➖➖\n<i>Pul yechib olish uchun quyidagi tugmani bosing :</i>",
+		"withdraw": "📤 Yechib olish "
+	},
+	"Withdraw": {
+		"content": "<b>💸 Sizning balansingiz : 0₽</b>\n<b>⭕️ Minimal yechib olish miqdori:  2₽</b>\n\n<b>👇 Olib tashlash usulini tanlang :</b>",
+		"card": "💳 UZCARD / HUMO",
+		"visa": "💰 VISA",
+		"click_wallet": "👛 Hamyonni bosing ",
+		"callback": "<b>✅ Karta raqamini kiriting/hamyon :</b>",
+		"exit": "⏭️ Назад"
+	}
+}
