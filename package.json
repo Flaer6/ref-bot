@@ -10,6 +10,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"mongoose": "^8.1.1",
 		"telegraf": "^4.15.3",
 		"telegraf-i18n": "^6.6.0"
 	},

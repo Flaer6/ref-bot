@@ -3,7 +3,8 @@
 	"Main_buttons": {
 		"earn": "💳 Pul ishlash",
 		"profile": "💼 Mening kabinetim",
-		"withdraw": "📤 Pulni yechib olish"
+		"withdraw": "📤 Pulni yechib olish",
+		"state": "📊 Statistika "
 	},
 	"Earn": {
 		"content": "<b>🚀 Referal programma</b>\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n<b>💵 tolaymz:</b>\n1 Referal - 500 UZS\n\n<b>👤 Siz taklish qilganlar soni:</b>\n0 партнёров\n\n<b>🔗 Sizning partnerlik ssilkangiz:</b>\n<code>${refUrl}</code>",
@@ -21,5 +22,9 @@
 		"click_wallet": "👛 Hamyonni bosing ",
 		"callback": "<b>✅ Karta raqamini kiriting/hamyon :</b>",
 		"exit": "⏭️ Назад"
+	},
+	"State": {
+		"content": "<b>📊 Bizning bot statistikamiz: </b>\n➖➖➖➖➖➖➖➖➖➖\n<b>⏳ Boshlash  loyiha :</b> 14.01.2024\n<b>🕜 Biz kunlar ishlaymiz :</b> 26\n<b>👨 Jami foydalanuvchilar: </b> ${totalUsers}",
+		"admin": "👨‍💻 Administrator"
 	}
 }
