@@ -1,9 +1,10 @@
+const { Telegraf, Markup, Scenes, session } = require('telegraf')
 const mongoose = require('mongoose')
-const { Telegraf, Markup } = require('telegraf')
 const I18n = require('telegraf-i18n')
+const { match } = require('telegraf-i18n')
+const moment = require('moment')
 
 const bot = new Telegraf('6411368960:AAEFBPQX2lNk3n1IAmWQ3iDh0RywNBGAPD0')
-
 const i18n = new I18n({
 	directory: __dirname + '/locales',
 	defaultLanguage: 'ru',
@@ -12,53 +13,59 @@ const i18n = new I18n({
 	allowMissing: false,
 })
 
+const refCount = 1000 //стоимость за 1 реферала
+const minWithdraw = 20000 //минимальный вывод
+
 mongoose.connect(
-	'mongodb+srv://flaer:G0j9aE3FPQvJaFrN@cluster0.koyjbvu.mongodb.net/?retryWrites=true&w=majority',
+	'mongodb+srv://ahaevviktor896:jIolaH5ki6Lrb8Yl@cluster0.fryapue.mongodb.net/?retryWrites=true&w=majority',
 	{
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
+		serverSelectionTimeoutMS: 5000,
 	}
 )
-
 const db = mongoose.connection
 db.on('error', console.error.bind(console, 'Ошибка подключения к MongoDB:'))
 db.once('open', () => {
 	console.log('Подключено к MongoDB!')
 })
 
-const userStatsSchema = new mongoose.Schema({
+const UserStats = mongoose.model('UserStats', {
 	userId: { type: Number, unique: true },
 	username: String,
+	refUserId: { type: Number, default: null },
+	referralCount: { type: Number, default: 0 },
+	withDraw: { type: Number, default: 0 },
+	startDate: { type: Date, default: Date.now },
 })
-
-const UserStats = mongoose.model('UserStats', userStatsSchema)
-
-const url = ctx => `https://t.me/FastRefBot?start=${ctx.message.from.id}`
 
 bot.use(i18n.middleware())
 
 bot.start(async ctx => {
-	const userId = ctx.from.id
-	const username = ctx.from.username
-
+	const username = ctx.message.from.first_name
+	const userId = ctx.message.from.id
+	const refUserId = parseInt(ctx.message.text.split(' ')[1])
 	try {
-		// Проверяем, существует ли пользователь в статистике
 		const existingUser = await UserStats.findOne({ userId: userId })
-
-		// Если пользователь не найден, создаем новую запись
 		if (!existingUser) {
 			const newUser = new UserStats({
 				userId: userId,
 				username: username,
+				refUserId: !isNaN(refUserId) ? refUserId : null,
 			})
-
-			// Сохраняем нового пользователя в базе данных
+			if (!isNaN(refUserId)) {
+				await UserStats.updateOne(
+					{ userId: refUserId },
+					{ $inc: { referralCount: 1 } }
+				)
+				ctx.replyWithHTML(ctx.i18n.t('invited', { refUserId }))
+			}
 			await newUser.save()
-
-			console.log('New user added to statistics')
+			ctx.telegram.sendMessage(
+				refUserId,
+				ctx.i18n.t('newPartner', { refCount })
+			)
 		}
 	} catch (error) {
-		console.error('Error updating user statistics:', error)
+		console.error(`Ошибка добавления пользователя: ${error}`)
 	}
 	ctx.reply(
 		'Select Language:',
@@ -68,98 +75,167 @@ bot.start(async ctx => {
 	)
 })
 
-function handleLanguage(ctx, locale) {
-	ctx.i18n.locale(locale)
+//Заработать
+bot.hears(match('Main_buttons.earn'), async ctx => {
+	const userId = ctx.message.from.id
+	const refUrl = `https://t.me/CaselokBot?start=${userId}`
+	const user = await UserStats.findOne({ userId: userId })
+	await ctx.replyWithHTML(
+		ctx.i18n.t('Earn.content', {
+			refUrl,
+			refCount,
+			partners: user.referralCount,
+		}),
+		Markup.inlineKeyboard([
+			[
+				Markup.button.url(
+					ctx.i18n.t('Earn.share'),
+					`https://t.me/share/url/?url=${ctx.i18n.t('Earn.share_text', {
+						refUrl,
+					})}
+					`
+				),
+			],
+		])
+	)
+})
 
-	const username = ctx.message.from.first_name
-	const user_id = ctx.message.from.id
-	//Приветствие
-	ctx.replyWithHTML(
-		ctx.i18n.t('hello', { username }),
-		Markup.keyboard([
-			[ctx.i18n.t('Main_buttons.earn'), ctx.i18n.t('Main_buttons.profile')],
-			[ctx.i18n.t('Main_buttons.withdraw'), ctx.i18n.t('Main_buttons.state')],
+//Мой кабинет
+bot.hears(match('Main_buttons.profile'), async ctx => {
+	const userId = ctx.message.from.id
+	const user = await UserStats.findOne({ userId: userId })
+
+	const startDate = moment(user.startDate)
+	const currentDate = moment()
+	const daysUsed = currentDate.diff(startDate, 'days')
+	await ctx.replyWithHTML(
+		ctx.i18n.t('Profile.content', {
+			username: ctx.message.from.first_name,
+			userId: userId,
+			balance: user.referralCount * refCount,
+			days: daysUsed,
+			withdraw: user.withDraw,
+		}),
+		Markup.inlineKeyboard([
+			[Markup.button.callback(ctx.i18n.t('Profile.withdraw'), 'withdraw')],
+		])
+	)
+})
+
+//Вывести
+const withdrawContent = async ctx => {
+	const userId = ctx.from.id
+	const user = await UserStats.findOne({ userId: userId })
+	await ctx.replyWithHTML(
+		ctx.i18n.t('Withdraw.content', {
+			minWithdraw,
+			balance: user.referralCount * refCount,
+		}),
+		Markup.inlineKeyboard([
+			[Markup.button.callback(ctx.i18n.t('Withdraw.card'), 'withdrawCallback')],
 		])
 			.oneTime()
 			.resize()
 	)
-	//Заработать
-	bot.hears(ctx.i18n.t('Main_buttons.earn'), () => {
-		const refUrl = url(ctx)
+}
+
+const sceneWithdraw = new Scenes.WizardScene(
+	'sceneWithdraw',
+	ctx => {
+		ctx.replyWithHTML(ctx.i18n.t('Withdraw.callback'))
+		return ctx.wizard.next()
+	},
+	ctx => {
+		if (ctx.message.text.length < 16 || !/^\d+$/.test(ctx.message.text)) {
+			ctx.reply(ctx.i18n.t('Withdraw.correctCard'))
+			return
+		} else {
+			ctx.reply(ctx.i18n.t('Withdraw.enterSum'))
+			return ctx.wizard.next()
+		}
+	},
+	async ctx => {
+		const user = await UserStats.findOne({ userId: ctx.from.id })
+		const withdrawalAmount = parseInt(ctx.message.text)
+
+		if (isNaN(withdrawalAmount)) {
+			ctx.reply(ctx.i18n.t('Withdraw.enterNum'))
+			return
+		}
+		switch (true) {
+			case withdrawalAmount < minWithdraw:
+				ctx.replyWithHTML(ctx.i18n.t('Withdraw.minSum', { minWithdraw }))
+				break
+
+			case withdrawalAmount > user.referralCount * refCount:
+				ctx.reply(ctx.i18n.t('Withdraw.noMoney'))
+				break
+
+			default:
+				// Обновление суммы на вывод в базе данных
+				user.withDraw = withdrawalAmount
+				await user.save()
+				ctx.reply(ctx.i18n.t('Withdraw.accepted'))
+				return ctx.scene.leave()
+		}
+	}
+)
+
+const stage = new Scenes.Stage([sceneWithdraw])
+bot.use(session())
+bot.use(stage.middleware())
+
+bot.hears(match('Main_buttons.withdraw'), withdrawContent)
+bot.action('withdraw', ctx => withdrawContent(ctx))
+bot.action('withdrawCallback', ctx => ctx.scene.enter('sceneWithdraw'))
+
+//Статистика
+bot.hears(match('Main_buttons.state'), async ctx => {
+	const startDate = new Date('2023-12-25')
+	const currentDate = new Date()
+	const daysWorked = Math.floor(
+		(currentDate - startDate) / (24 * 60 * 60 * 1000)
+	)
+	try {
 		ctx.replyWithHTML(
-			ctx.i18n.t('Earn.content', { refUrl }),
+			ctx.i18n.t('State.content', {
+				totalUsers: await UserStats.countDocuments(),
+				startDate: startDate.toLocaleDateString(),
+				daysWorked,
+			}),
 			Markup.inlineKeyboard([
-				[
-					Markup.button.url(
-						ctx.i18n.t('Earn.share'),
-						`https://t.me/share/url/?url=${ctx.i18n.t('Earn.share_text', {
-							refUrl,
-						})}
-            `
-					),
-				],
+				[Markup.button.url(ctx.i18n.t('State.admin'), 't.me/zasa_diey1')],
 			])
 		)
-	})
-	//Мой кабинет
-	bot.hears(ctx.i18n.t('Main_buttons.profile'), () => {
+	} catch (error) {
+		console.error(`Ошибка статистики: ${error}`)
+		ctx.reply(ctx.i18n.t('State.error'))
+	}
+})
+
+function handleLanguage(lang) {
+	return ctx => {
+		ctx.i18n.locale(lang)
+
+		const username = ctx.message.from.first_name
+		//Приветствие
 		ctx.replyWithHTML(
-			ctx.i18n.t('Profile.content', { username, user_id }),
-			Markup.inlineKeyboard([
-				[Markup.button.callback(ctx.i18n.t('Profile.withdraw'), 'withdraw')],
-			])
-		)
-	})
-	//Вывести
-	const withdrawContent = () => {
-		ctx.replyWithHTML(
-			ctx.i18n.t('Withdraw.content'),
-			Markup.inlineKeyboard([
-				[
-					Markup.button.callback(
-						ctx.i18n.t('Withdraw.card'),
-						'withdrawCallback'
-					),
-					Markup.button.callback(
-						ctx.i18n.t('Withdraw.visa'),
-						'withdrawCallback'
-					),
-				],
-				[
-					Markup.button.callback(
-						ctx.i18n.t('Withdraw.click_wallet'),
-						'withdrawCallback'
-					),
-				],
+			ctx.i18n.t('hello', {
+				username: ctx.message.from.first_name,
+			}),
+			Markup.keyboard([
+				[ctx.i18n.t('Main_buttons.earn'), ctx.i18n.t('Main_buttons.profile')],
+				[ctx.i18n.t('Main_buttons.withdraw'), ctx.i18n.t('Main_buttons.state')],
 			])
 				.oneTime()
 				.resize()
 		)
 	}
-	bot.action('withdraw', () => withdrawContent())
-	bot.hears(ctx.i18n.t('Main_buttons.withdraw'), () => withdrawContent())
-	bot.action('withdrawCallback', () =>
-		ctx.replyWithHTML(ctx.i18n.t('Withdraw.callback'))
-	)
-	//Статистика
-	bot.hears(ctx.i18n.t('Main_buttons.state'), async () => {
-		try {
-			const totalUsers = await UserStats.countDocuments()
-			ctx.replyWithHTML(
-				ctx.i18n.t('State.content', { totalUsers }),
-				Markup.inlineKeyboard([
-					[Markup.button.url(ctx.i18n.t('State.admin'), 't.me/zasa_diey1')],
-				])
-			)
-		} catch (error) {
-			console.error('Error fetching statistics:', error)
-			ctx.reply('Произошла ошибка при получении статистики.')
-		}
-	})
 }
+
 //Смена языков
-bot.hears('🇷🇺 Русский', ctx => handleLanguage(ctx, 'ru'))
-bot.hears('🇺🇿 Oʻzbekcha', ctx => handleLanguage(ctx, 'uz'))
+bot.hears('🇷🇺 Русский', handleLanguage('ru'))
+bot.hears('🇺🇿 Oʻzbekcha', handleLanguage('uz'))
 
 bot.launch()
 process.once('SIGINT', () => bot.stop('SIGINT'))

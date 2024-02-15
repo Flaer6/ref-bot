@@ -1,30 +1,36 @@
 {
 	"hello": "<b>🚀 Xush kelibsiz ${username}!</b>",
+	"invited": "Вас пригласил <b><a href='tg://user?id=${refUserId}'>Пользователь</a></b>",
+	"newPartner": "У вас новый реферал! Баланс пополнился на ${refCount}",
 	"Main_buttons": {
 		"earn": "💳 Pul ishlash",
 		"profile": "💼 Mening kabinetim",
 		"withdraw": "📤 Pulni yechib olish",
-		"state": "📊 Statistika "
+		"state": "📊 Statistika"
 	},
 	"Earn": {
-		"content": "<b>🚀 Referal programma</b>\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n<b>💵 tolaymz:</b>\n1 Referal - 500 UZS\n\n<b>👤 Siz taklish qilganlar soni:</b>\n0 партнёров\n\n<b>🔗 Sizning partnerlik ssilkangiz:</b>\n<code>${refUrl}</code>",
+		"content": "<b>🚀 Referal programma</b>\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n<b>💵 tolaymz:</b>\n1 Referal - ${refCount}UZS\n\n<b>👤 Siz taklish qilganlar soni:</b>\n${partners} партнёров\n\n<b>🔗 Sizning partnerlik ssilkangiz:</b>\n<code>${refUrl}</code>",
 		"share": "♻️ Havolani ulashing",
 		"share_text": "👋 Referal botimizga xush kelibsiz! 🎉 Do'stlaringizni taklif qiling va bonuslarga ega bo'ling! 🎁\n ${refUrl}"
 	},
 	"Profile": {
-		"content": "<b>📱 Sizning ofisingiz: </b>\n➖➖➖➖➖➖➖➖➖\n<b>👤 Имя:</b> ${username}\n<b>🔑 sizning ID:</b> <code>${user_id}</code>\n<b>🕜 botdagi kunlar: </b> 1\n➖➖➖➖➖➖➖➖➖\n<b>💳 Osnovnoy :</b>\n● Osnovnoy : <b>0₽</b>\n● Ishlagan :<b>0₽</b>\n● To'lanishi kutilmoqda:  <b>0₽</b>\n➖➖➖➖➖➖➖➖➖\n<i>Pul yechib olish uchun quyidagi tugmani bosing :</i>",
+		"content": "<b>📱 Sizning ofisingiz: </b>\n➖➖➖➖➖➖➖➖➖\n<b>👤 Имя:</b> ${username}\n<b>🔑 sizning ID:</b> <code>${user_id}</code>\n<b>🕜 botdagi kunlar: </b> ${days}\n➖➖➖➖➖➖➖➖➖\n<b>💳 Osnovnoy :</b>\n● Osnovnoy : <b>${balance}UZS</b>\n● Ishlagan :<b>${balance}UZS</b>\n● To'lanishi kutilmoqda:  <b>0₽</b>\n➖➖➖➖➖➖➖➖➖\n<i>Pul yechib olish uchun quyidagi tugmani bosing :</i>",
 		"withdraw": "📤 Yechib olish "
 	},
 	"Withdraw": {
-		"content": "<b>💸 Sizning balansingiz : 0₽</b>\n<b>⭕️ Minimal yechib olish miqdori:  2₽</b>\n\n<b>👇 Olib tashlash usulini tanlang :</b>",
+		"content": "<b>💸 Sizning balansingiz: ${balance}UZS</b>\n<b>⭕️ Minimal yechib olish miqdori: ${minWithdraw}UZS</b>\n\n<b>👇 Olib tashlash usulini tanlang :</b>",
 		"card": "💳 UZCARD / HUMO",
-		"visa": "💰 VISA",
-		"click_wallet": "👛 Hamyonni bosing ",
 		"callback": "<b>✅ Karta raqamini kiriting/hamyon :</b>",
+		"correctCard": "Введите корректный номер!",
+		"enterSum": "Введите сумму вывода",
+		"enterNum": "Введите число",
+		"minSum": "Минимальная сумма для вывода ${minWithdraw} UZS",
+		"noMoney": "У вас недостаточно средств",
+		"accepted": "Принято",
 		"exit": "⏭️ Назад"
 	},
 	"State": {
-		"content": "<b>📊 Bizning bot statistikamiz: </b>\n➖➖➖➖➖➖➖➖➖➖\n<b>⏳ Boshlash  loyiha :</b> 14.01.2024\n<b>🕜 Biz kunlar ishlaymiz :</b> 26\n<b>👨 Jami foydalanuvchilar: </b> ${totalUsers}",
+		"content": "<b>📊 bot  бота:</b>\n➖➖➖➖➖➖➖➖➖➖\n<b>⏳ Loyiha boshlanishi: </b> ${startDate}\n<b>🕜 Ish kunlari: </b> ${daysWorked}\n<b>👨 Jami  foydalanuvchilar :</b> ${totalUsers + 3500}",
 		"admin": "👨‍💻 Administrator"
 	}
 }
