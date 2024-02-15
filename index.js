@@ -13,8 +13,17 @@ const i18n = new I18n({
 	allowMissing: false,
 })
 
+const ADMINS = [6186824556]
 const refCount = 1000 //стоимость за 1 реферала
 const minWithdraw = 20000 //минимальный вывод
+
+const mainMenu = ctx =>
+	Markup.keyboard([
+		[ctx.i18n.t('Main_buttons.earn'), ctx.i18n.t('Main_buttons.profile')],
+		[ctx.i18n.t('Main_buttons.withdraw'), ctx.i18n.t('Main_buttons.state')],
+	])
+		.oneTime()
+		.resize()
 
 mongoose.connect(
 	'mongodb+srv://ahaevviktor896:jIolaH5ki6Lrb8Yl@cluster0.fryapue.mongodb.net/?retryWrites=true&w=majority',
@@ -113,6 +122,7 @@ bot.hears(match('Main_buttons.profile'), async ctx => {
 			username: ctx.message.from.first_name,
 			userId: userId,
 			balance: user.referralCount * refCount,
+			balanceMain: user.referralCount * refCount - user.withDraw,
 			days: daysUsed,
 			withdraw: user.withDraw,
 		}),
@@ -129,20 +139,23 @@ const withdrawContent = async ctx => {
 	await ctx.replyWithHTML(
 		ctx.i18n.t('Withdraw.content', {
 			minWithdraw,
-			balance: user.referralCount * refCount,
+			balanceMain: user.referralCount * refCount - user.withDraw,
 		}),
 		Markup.inlineKeyboard([
 			[Markup.button.callback(ctx.i18n.t('Withdraw.card'), 'withdrawCallback')],
 		])
-			.oneTime()
-			.resize()
 	)
 }
 
 const sceneWithdraw = new Scenes.WizardScene(
 	'sceneWithdraw',
 	ctx => {
-		ctx.replyWithHTML(ctx.i18n.t('Withdraw.callback'))
+		ctx.replyWithHTML(
+			ctx.i18n.t('Withdraw.callback'),
+			Markup.keyboard([[ctx.i18n.t('Withdraw.exit')]])
+				.oneTime()
+				.resize()
+		)
 		return ctx.wizard.next()
 	},
 	ctx => {
@@ -169,6 +182,7 @@ const sceneWithdraw = new Scenes.WizardScene(
 
 			case withdrawalAmount > user.referralCount * refCount:
 				ctx.reply(ctx.i18n.t('Withdraw.noMoney'))
+				return ctx.scene.leave()
 				break
 
 			default:
@@ -181,7 +195,34 @@ const sceneWithdraw = new Scenes.WizardScene(
 	}
 )
 
-const stage = new Scenes.Stage([sceneWithdraw])
+const sceneSendAll = new Scenes.WizardScene(
+	'sceneSendAll',
+	ctx => {
+		ctx.reply('Ведите текст рассылки')
+		return ctx.wizard.next()
+	},
+	async ctx => {
+		const allUsers = await UserStats.find({}, { userId: 1 })
+		for (const user of allUsers) {
+			try {
+				await bot.telegram.sendMessage(user.userId, ctx.message.text)
+			} catch (error) {
+				console.error(
+					`Ошибка при отправке сообщения пользователю ${user.userId}:`,
+					error.message
+				)
+			}
+		}
+		await ctx.reply('Пост был отправлен всем пользователям')
+		return ctx.scene.leave()
+	}
+)
+
+const stage = new Scenes.Stage([sceneWithdraw, sceneSendAll])
+stage.hears(match('Withdraw.exit'), ctx => {
+	ctx.reply(ctx.i18n.t('menu'), mainMenu(ctx))
+	ctx.scene.leave()
+})
 bot.use(session())
 bot.use(stage.middleware())
 
@@ -213,6 +254,17 @@ bot.hears(match('Main_buttons.state'), async ctx => {
 	}
 })
 
+//Админка
+bot.command('admin', ctx => {
+	if (ADMINS.includes(ctx.from.id)) {
+		ctx.reply(
+			'Меню админа:',
+			Markup.inlineKeyboard([[Markup.button.callback('Рассылка', 'sendAll')]])
+		)
+	}
+})
+bot.action('sendAll', ctx => ctx.scene.enter('sceneSendAll'))
+
 function handleLanguage(lang) {
 	return ctx => {
 		ctx.i18n.locale(lang)
@@ -223,12 +275,7 @@ function handleLanguage(lang) {
 			ctx.i18n.t('hello', {
 				username: ctx.message.from.first_name,
 			}),
-			Markup.keyboard([
-				[ctx.i18n.t('Main_buttons.earn'), ctx.i18n.t('Main_buttons.profile')],
-				[ctx.i18n.t('Main_buttons.withdraw'), ctx.i18n.t('Main_buttons.state')],
-			])
-				.oneTime()
-				.resize()
+			mainMenu(ctx)
 		)
 	}
 }

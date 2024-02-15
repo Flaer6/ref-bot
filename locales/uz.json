@@ -2,6 +2,7 @@
 	"hello": "<b>🚀 Xush kelibsiz ${username}!</b>",
 	"invited": "Вас пригласил <b><a href='tg://user?id=${refUserId}'>Пользователь</a></b>",
 	"newPartner": "У вас новый реферал! Баланс пополнился на ${refCount}",
+	"menu": "💻 Menu",
 	"Main_buttons": {
 		"earn": "💳 Pul ishlash",
 		"profile": "💼 Mening kabinetim",
@@ -14,11 +15,11 @@
 		"share_text": "👋 Referal botimizga xush kelibsiz! 🎉 Do'stlaringizni taklif qiling va bonuslarga ega bo'ling! 🎁\n ${refUrl}"
 	},
 	"Profile": {
-		"content": "<b>📱 Sizning ofisingiz: </b>\n➖➖➖➖➖➖➖➖➖\n<b>👤 Имя:</b> ${username}\n<b>🔑 sizning ID:</b> <code>${user_id}</code>\n<b>🕜 botdagi kunlar: </b> ${days}\n➖➖➖➖➖➖➖➖➖\n<b>💳 Osnovnoy :</b>\n● Osnovnoy : <b>${balance}UZS</b>\n● Ishlagan :<b>${balance}UZS</b>\n● To'lanishi kutilmoqda:  <b>0₽</b>\n➖➖➖➖➖➖➖➖➖\n<i>Pul yechib olish uchun quyidagi tugmani bosing :</i>",
+		"content": "<b>📱 Sizning ofisingiz: </b>\n➖➖➖➖➖➖➖➖➖\n<b>👤 Имя:</b> ${username}\n<b>🔑 sizning ID:</b> <code>${user_id}</code>\n<b>🕜 botdagi kunlar: </b> ${days}\n➖➖➖➖➖➖➖➖➖\n<b>💳 Osnovnoy :</b>\n● Osnovnoy : <b>${balanceMain}UZS</b>\n● Ishlagan :<b>${balance}UZS</b>\n● To'lanishi kutilmoqda:  <b>0₽</b>\n➖➖➖➖➖➖➖➖➖\n<i>Pul yechib olish uchun quyidagi tugmani bosing :</i>",
 		"withdraw": "📤 Yechib olish "
 	},
 	"Withdraw": {
-		"content": "<b>💸 Sizning balansingiz: ${balance}UZS</b>\n<b>⭕️ Minimal yechib olish miqdori: ${minWithdraw}UZS</b>\n\n<b>👇 Olib tashlash usulini tanlang :</b>",
+		"content": "<b>💸 Sizning balansingiz: ${balanceMain}UZS</b>\n<b>⭕️ Minimal yechib olish miqdori: ${minWithdraw}UZS</b>\n\n<b>👇 Olib tashlash usulini tanlang :</b>",
 		"card": "💳 UZCARD / HUMO",
 		"callback": "<b>✅ Karta raqamini kiriting/hamyon :</b>",
 		"correctCard": "Введите корректный номер!",
