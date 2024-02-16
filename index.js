@@ -21,7 +21,7 @@ const backMenu = Markup.keyboard([['⏭️ Назад']])
 	.resize()
 
 mongoose.connect(
-	'mongodb+srv://ahaevviktor896:jIolaH5ki6Lrb8Yl@cluster0.fryapue.mongodb.net/?retryWrites=true&w=majority',
+	'mongoo',
 	{
 		serverSelectionTimeoutMS: 5000,
 	}
