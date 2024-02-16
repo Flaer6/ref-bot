@@ -2,7 +2,7 @@ const { Telegraf, Markup, Scenes, session } = require('telegraf')
 const mongoose = require('mongoose')
 const moment = require('moment')
 
-const bot = new Telegraf('6411368960:AAEFBPQX2lNk3n1IAmWQ3iDh0RywNBGAPD0')
+const bot = new Telegraf('') //токен бота
 
 const ADMINS = [6186824556, 1405585423, 5034885130] //id админов
 const refCount = 750 //стоимость за 1 реферала
@@ -16,7 +16,7 @@ const mainMenu = Markup.keyboard([
 	.resize()
 
 mongoose.connect(
-	'mongodb+srv://ahaevviktor896:jIolaH5ki6Lrb8Yl@cluster0.fryapue.mongodb.net/?retryWrites=true&w=majority',
+	'ссылка на бд',
 	{
 		serverSelectionTimeoutMS: 5000,
 	}
