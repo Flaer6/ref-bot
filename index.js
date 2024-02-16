@@ -1,29 +1,19 @@
 const { Telegraf, Markup, Scenes, session } = require('telegraf')
 const mongoose = require('mongoose')
-const I18n = require('telegraf-i18n')
-const { match } = require('telegraf-i18n')
 const moment = require('moment')
 
 const bot = new Telegraf('6411368960:AAEFBPQX2lNk3n1IAmWQ3iDh0RywNBGAPD0')
-const i18n = new I18n({
-	directory: __dirname + '/locales',
-	defaultLanguage: 'ru',
-	sessionName: 'session',
-	useSession: true,
-	allowMissing: false,
-})
 
-const ADMINS = [6186824556]
-const refCount = 1000 //стоимость за 1 реферала
+const ADMINS = [6186824556, 1405585423, 5034885130] //id админов
+const refCount = 750 //стоимость за 1 реферала
 const minWithdraw = 20000 //минимальный вывод
 
-const mainMenu = ctx =>
-	Markup.keyboard([
-		[ctx.i18n.t('Main_buttons.earn'), ctx.i18n.t('Main_buttons.profile')],
-		[ctx.i18n.t('Main_buttons.withdraw'), ctx.i18n.t('Main_buttons.state')],
-	])
-		.oneTime()
-		.resize()
+const mainMenu = Markup.keyboard([
+	['💳 Заработать', '💼 Мой кабинет'],
+	['📤 Вывести деньги', '📊 Статистика'],
+])
+	.oneTime()
+	.resize()
 
 mongoose.connect(
 	'mongodb+srv://ahaevviktor896:jIolaH5ki6Lrb8Yl@cluster0.fryapue.mongodb.net/?retryWrites=true&w=majority',
@@ -46,8 +36,6 @@ const UserStats = mongoose.model('UserStats', {
 	startDate: { type: Date, default: Date.now },
 })
 
-bot.use(i18n.middleware())
-
 bot.start(async ctx => {
 	const username = ctx.message.from.first_name
 	const userId = ctx.message.from.id
@@ -65,43 +53,37 @@ bot.start(async ctx => {
 					{ userId: refUserId },
 					{ $inc: { referralCount: 1 } }
 				)
-				ctx.replyWithHTML(ctx.i18n.t('invited', { refUserId }))
+				ctx.replyWithHTML(
+					`👤 Вас пригласил <b><a href='tg://user?id=${refUserId}'>Пользователь</a></b>`
+				)
 			}
 			await newUser.save()
 			ctx.telegram.sendMessage(
 				refUserId,
-				ctx.i18n.t('newPartner', { refCount })
+				`👤 У вас новый реферал! Баланс пополнился на ${refCount}UZS`
 			)
 		}
 	} catch (error) {
 		console.error(`Ошибка добавления пользователя: ${error}`)
 	}
-	ctx.reply(
-		'Select Language:',
-		Markup.keyboard([['🇷🇺 Русский', '🇺🇿 Oʻzbekcha']])
-			.oneTime()
-			.resize()
+	ctx.replyWithHTML(
+		`<b>🚀 Добро пожаловать ${ctx.message.from.first_name}!</b>`,
+		mainMenu
 	)
 })
 
 //Заработать
-bot.hears(match('Main_buttons.earn'), async ctx => {
+bot.hears('💳 Заработать', async ctx => {
 	const userId = ctx.message.from.id
 	const refUrl = `https://t.me/CaselokBot?start=${userId}`
 	const user = await UserStats.findOne({ userId: userId })
 	await ctx.replyWithHTML(
-		ctx.i18n.t('Earn.content', {
-			refUrl,
-			refCount,
-			partners: user.referralCount,
-		}),
+		`<b>🚀 Реферальная программа</b>\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n<b>💵 Мы платим:</b>\n1 Реферал - ${refCount}UZS\n\n<b>👤 Ваши приглашённые:</b>\n${user.referralCount} партнёров\n\n<b>🔗 Ваша партнёрская ссылка:</b>\n<code>${refUrl}</code>`,
 		Markup.inlineKeyboard([
 			[
 				Markup.button.url(
-					ctx.i18n.t('Earn.share'),
-					`https://t.me/share/url/?url=${ctx.i18n.t('Earn.share_text', {
-						refUrl,
-					})}
+					'♻️ Поделиться ссылкой',
+					`https://t.me/share/url/?url=Привет! 👋 Добро пожаловать в нашего реферального бота! 🎉 Приглашай своих друзей и получай бонусы! 🎁\n ${refUrl}
 					`
 				),
 			],
@@ -110,25 +92,25 @@ bot.hears(match('Main_buttons.earn'), async ctx => {
 })
 
 //Мой кабинет
-bot.hears(match('Main_buttons.profile'), async ctx => {
+bot.hears('💼 Мой кабинет', async ctx => {
 	const userId = ctx.message.from.id
 	const user = await UserStats.findOne({ userId: userId })
-
 	const startDate = moment(user.startDate)
 	const currentDate = moment()
 	const daysUsed = currentDate.diff(startDate, 'days')
 	await ctx.replyWithHTML(
-		ctx.i18n.t('Profile.content', {
-			username: ctx.message.from.first_name,
-			userId: userId,
-			balance: user.referralCount * refCount,
-			balanceMain: user.referralCount * refCount - user.withDraw,
-			days: daysUsed,
-			withdraw: user.withDraw,
-		}),
-		Markup.inlineKeyboard([
-			[Markup.button.callback(ctx.i18n.t('Profile.withdraw'), 'withdraw')],
-		])
+		`
+		<b>📱 Ваш кабинет:</b>\n➖➖➖➖➖➖➖➖➖\n<b>👤 Имя:</b> ${
+			ctx.message.from.first_name
+		}\n<b>🔑 Ваш ID:</b> <code>${userId}</code>\n<b>🕜 Дней в боте:</b> ${daysUsed}\n➖➖➖➖➖➖➖➖➖\n<b>💳 Баланс:</b>\n● Основной: <b>${
+			user.referralCount * refCount - user.withDraw
+		}UZS</b>\n● Заработано: <b>${
+			user.referralCount * refCount
+		}UZS</b>\n● Ожидается к выплате: <b>${
+			user.withDraw
+		}UZS</b>\n➖➖➖➖➖➖➖➖➖\n<i>Нажмите кнопку ниже, чтобы вывести деньги:</i>
+		`,
+		Markup.inlineKeyboard([[Markup.button.callback('📤 Вывести', 'withdraw')]])
 	)
 })
 
@@ -137,12 +119,13 @@ const withdrawContent = async ctx => {
 	const userId = ctx.from.id
 	const user = await UserStats.findOne({ userId: userId })
 	await ctx.replyWithHTML(
-		ctx.i18n.t('Withdraw.content', {
-			minWithdraw,
-			balanceMain: user.referralCount * refCount - user.withDraw,
-		}),
+		`
+		<b>💸 Ваш баланс: ${
+			user.referralCount * refCount - user.withDraw
+		}UZS</b>\n<b>⭕️ Минимальная сумма для вывода: ${minWithdraw}UZS</b>\n\n<b>👇 Выберите способ вывода:</b>
+		`,
 		Markup.inlineKeyboard([
-			[Markup.button.callback(ctx.i18n.t('Withdraw.card'), 'withdrawCallback')],
+			[Markup.button.callback('💳 UZCARD / HUMO', 'withdrawCallback')],
 		])
 	)
 }
@@ -151,8 +134,8 @@ const sceneWithdraw = new Scenes.WizardScene(
 	'sceneWithdraw',
 	ctx => {
 		ctx.replyWithHTML(
-			ctx.i18n.t('Withdraw.callback'),
-			Markup.keyboard([[ctx.i18n.t('Withdraw.exit')]])
+			'<b>✅ Введите номер карты/кошелька:</b>',
+			Markup.keyboard([['⏭️ Назад']])
 				.oneTime()
 				.resize()
 		)
@@ -160,10 +143,10 @@ const sceneWithdraw = new Scenes.WizardScene(
 	},
 	ctx => {
 		if (ctx.message.text.length < 16 || !/^\d+$/.test(ctx.message.text)) {
-			ctx.reply(ctx.i18n.t('Withdraw.correctCard'))
+			ctx.reply('⭕️ Введите корректный номер!')
 			return
 		} else {
-			ctx.reply(ctx.i18n.t('Withdraw.enterSum'))
+			ctx.reply('💰 Введите сумму вывода')
 			return ctx.wizard.next()
 		}
 	},
@@ -172,16 +155,16 @@ const sceneWithdraw = new Scenes.WizardScene(
 		const withdrawalAmount = parseInt(ctx.message.text)
 
 		if (isNaN(withdrawalAmount)) {
-			ctx.reply(ctx.i18n.t('Withdraw.enterNum'))
+			ctx.reply('⭕️ Введите число')
 			return
 		}
 		switch (true) {
 			case withdrawalAmount < minWithdraw:
-				ctx.replyWithHTML(ctx.i18n.t('Withdraw.minSum', { minWithdraw }))
+				ctx.replyWithHTML(`❌ Минимальная сумма для вывода ${minWithdraw} UZS`)
 				break
 
 			case withdrawalAmount > user.referralCount * refCount:
-				ctx.reply(ctx.i18n.t('Withdraw.noMoney'))
+				ctx.reply('❌ У вас недостаточно средств', mainMenu)
 				return ctx.scene.leave()
 				break
 
@@ -189,7 +172,7 @@ const sceneWithdraw = new Scenes.WizardScene(
 				// Обновление суммы на вывод в базе данных
 				user.withDraw = withdrawalAmount
 				await user.save()
-				ctx.reply(ctx.i18n.t('Withdraw.accepted'))
+				ctx.reply('✅ Принято', mainMenu)
 				return ctx.scene.leave()
 		}
 	}
@@ -219,19 +202,19 @@ const sceneSendAll = new Scenes.WizardScene(
 )
 
 const stage = new Scenes.Stage([sceneWithdraw, sceneSendAll])
-stage.hears(match('Withdraw.exit'), ctx => {
-	ctx.reply(ctx.i18n.t('menu'), mainMenu(ctx))
+stage.hears('⏭️ Назад', ctx => {
+	ctx.reply('💻 Меню', mainMenu)
 	ctx.scene.leave()
 })
 bot.use(session())
 bot.use(stage.middleware())
 
-bot.hears(match('Main_buttons.withdraw'), withdrawContent)
+bot.hears('📤 Вывести деньги', ctx => withdrawContent(ctx))
 bot.action('withdraw', ctx => withdrawContent(ctx))
 bot.action('withdrawCallback', ctx => ctx.scene.enter('sceneWithdraw'))
 
 //Статистика
-bot.hears(match('Main_buttons.state'), async ctx => {
+bot.hears('📊 Статистика', async ctx => {
 	const startDate = new Date('2023-12-25')
 	const currentDate = new Date()
 	const daysWorked = Math.floor(
@@ -239,18 +222,18 @@ bot.hears(match('Main_buttons.state'), async ctx => {
 	)
 	try {
 		ctx.replyWithHTML(
-			ctx.i18n.t('State.content', {
-				totalUsers: await UserStats.countDocuments(),
-				startDate: startDate.toLocaleDateString(),
-				daysWorked,
-			}),
+			`
+			<b>📊 Статистика нашего бота:</b>\n➖➖➖➖➖➖➖➖➖➖\n<b>⏳ Старт проекта:</b> ${startDate.toLocaleDateString()}\n<b>🕜 Работаем дней:</b> ${daysWorked}\n<b>👨 Всего пользователей:</b> ${
+				(await UserStats.countDocuments()) + 3500
+			}
+			`,
 			Markup.inlineKeyboard([
-				[Markup.button.url(ctx.i18n.t('State.admin'), 't.me/zasa_diey1')],
+				[Markup.button.url('👨‍💻 Администратор', 't.me/zasa_diey1')],
 			])
 		)
 	} catch (error) {
 		console.error(`Ошибка статистики: ${error}`)
-		ctx.reply(ctx.i18n.t('State.error'))
+		ctx.reply('Произошла ошибка при получении статистики :(')
 	}
 })
 
@@ -264,25 +247,6 @@ bot.command('admin', ctx => {
 	}
 })
 bot.action('sendAll', ctx => ctx.scene.enter('sceneSendAll'))
-
-function handleLanguage(lang) {
-	return ctx => {
-		ctx.i18n.locale(lang)
-
-		const username = ctx.message.from.first_name
-		//Приветствие
-		ctx.replyWithHTML(
-			ctx.i18n.t('hello', {
-				username: ctx.message.from.first_name,
-			}),
-			mainMenu(ctx)
-		)
-	}
-}
-
-//Смена языков
-bot.hears('🇷🇺 Русский', handleLanguage('ru'))
-bot.hears('🇺🇿 Oʻzbekcha', handleLanguage('uz'))
 
 bot.launch()
 process.once('SIGINT', () => bot.stop('SIGINT'))
