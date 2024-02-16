@@ -2,11 +2,12 @@ const { Telegraf, Markup, Scenes, session } = require('telegraf')
 const mongoose = require('mongoose')
 const moment = require('moment')
 
-const bot = new Telegraf('') //токен бота
+const bot = new Telegraf('6661647643:AAGqGtuMpL6KtiOLRjLDaQxLlR3spMDm4_8') //токен бота
 
 const ADMINS = [6186824556, 1405585423, 5034885130] //id админов
 const refCount = 750 //стоимость за 1 реферала
 const minWithdraw = 20000 //минимальный вывод
+const botUrl = 'Million3rbot' // юзер бота (без @)
 
 const mainMenu = Markup.keyboard([
 	['💳 Заработать', '💼 Мой кабинет'],
@@ -16,7 +17,7 @@ const mainMenu = Markup.keyboard([
 	.resize()
 
 mongoose.connect(
-	'ссылка на бд',
+	'mongodb+srv://ahaevviktor896:jIolaH5ki6Lrb8Yl@cluster0.fryapue.mongodb.net/?retryWrites=true&w=majority',
 	{
 		serverSelectionTimeoutMS: 5000,
 	}
@@ -40,32 +41,38 @@ bot.start(async ctx => {
 	const username = ctx.message.from.first_name
 	const userId = ctx.message.from.id
 	const refUserId = parseInt(ctx.message.text.split(' ')[1])
+
 	try {
 		const existingUser = await UserStats.findOne({ userId: userId })
+
 		if (!existingUser) {
 			const newUser = new UserStats({
 				userId: userId,
 				username: username,
 				refUserId: !isNaN(refUserId) ? refUserId : null,
 			})
+
 			if (!isNaN(refUserId)) {
 				await UserStats.updateOne(
 					{ userId: refUserId },
 					{ $inc: { referralCount: 1 } }
 				)
-				ctx.replyWithHTML(
-					`👤 Вас пригласил <b><a href='tg://user?id=${refUserId}'>Пользователь</a></b>`
-				)
+
+				// Проверка, что refUserId не является null
+				if (refUserId !== null) {
+					ctx.telegram.sendMessage(
+						refUserId,
+						`👤 У вас новый реферал! Баланс пополнился на ${refCount}UZS`
+					)
+				}
 			}
+
 			await newUser.save()
-			ctx.telegram.sendMessage(
-				refUserId,
-				`👤 У вас новый реферал! Баланс пополнился на ${refCount}UZS`
-			)
 		}
 	} catch (error) {
 		console.error(`Ошибка добавления пользователя: ${error}`)
 	}
+
 	ctx.replyWithHTML(
 		`<b>🚀 Добро пожаловать ${ctx.message.from.first_name}!</b>`,
 		mainMenu
@@ -75,7 +82,7 @@ bot.start(async ctx => {
 //Заработать
 bot.hears('💳 Заработать', async ctx => {
 	const userId = ctx.message.from.id
-	const refUrl = `https://t.me/CaselokBot?start=${userId}`
+	const refUrl = `https://t.me/${botUrl}?start=${userId}`
 	const user = await UserStats.findOne({ userId: userId })
 	await ctx.replyWithHTML(
 		`<b>🚀 Реферальная программа</b>\n➖➖➖➖➖➖➖➖➖➖➖➖➖\n<b>💵 Мы платим:</b>\n1 Реферал - ${refCount}UZS\n\n<b>👤 Ваши приглашённые:</b>\n${user.referralCount} партнёров\n\n<b>🔗 Ваша партнёрская ссылка:</b>\n<code>${refUrl}</code>`,
