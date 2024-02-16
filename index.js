@@ -2,17 +2,21 @@ const { Telegraf, Markup, Scenes, session } = require('telegraf')
 const mongoose = require('mongoose')
 const moment = require('moment')
 
-const bot = new Telegraf('6661647643:AAGqGtuMpL6KtiOLRjLDaQxLlR3spMDm4_8') //токен бота
+const bot = new Telegraf('token') //токен бота
 
-const ADMINS = [6186824556, 1405585423, 5034885130] //id админов
+const ADMINS = [] //id админов
 const refCount = 750 //стоимость за 1 реферала
 const minWithdraw = 20000 //минимальный вывод
-const botUrl = 'Million3rbot' // юзер бота (без @)
+const botUrl = 'link' // юзер бота (без @)
 
 const mainMenu = Markup.keyboard([
 	['💳 Заработать', '💼 Мой кабинет'],
 	['📤 Вывести деньги', '📊 Статистика'],
 ])
+	.oneTime()
+	.resize()
+
+const backMenu = Markup.keyboard([['⏭️ Назад']])
 	.oneTime()
 	.resize()
 
@@ -140,12 +144,7 @@ const withdrawContent = async ctx => {
 const sceneWithdraw = new Scenes.WizardScene(
 	'sceneWithdraw',
 	ctx => {
-		ctx.replyWithHTML(
-			'<b>✅ Введите номер карты/кошелька:</b>',
-			Markup.keyboard([['⏭️ Назад']])
-				.oneTime()
-				.resize()
-		)
+		ctx.replyWithHTML('<b>✅ Введите номер карты/кошелька:</b>', backMenu)
 		return ctx.wizard.next()
 	},
 	ctx => {
@@ -188,7 +187,7 @@ const sceneWithdraw = new Scenes.WizardScene(
 const sceneSendAll = new Scenes.WizardScene(
 	'sceneSendAll',
 	ctx => {
-		ctx.reply('Ведите текст рассылки')
+		ctx.reply('Ведите текст рассылки', backMenu)
 		return ctx.wizard.next()
 	},
 	async ctx => {
